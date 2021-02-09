@@ -8,7 +8,9 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       groupId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        unique: true,
+        allowNull: false
       },
       linkVkFood: {
         type: Sequelize.STRING

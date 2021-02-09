@@ -33,7 +33,8 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Category',
         key: 'id',
         as: 'categoryId'
-      }
+      },
+      allowNull: false
     }
   }, {});
   Position.associate = function (models) {

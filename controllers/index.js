@@ -1,4 +1,4 @@
-const { Group } = require('../models');
+const { Group, Category } = require('../models');
 const db = require('../models');
 
 const createGroup = (req, res) => {
@@ -29,8 +29,18 @@ const getGroupMenuById = (req, res) => {
     });
 };
 
+const createCategories = (req, res) => {
+    db.sequelize.transaction(async t => {
+        const categories = await Category.bulkCreate(req.body.categories);
+        return res.status(201).json({ categories });
+    }).catch((error) => {
+        return res.status(500).send(error.message);
+    });
+};
+
 module.exports = {
     createGroup, 
-    getGroupMenuById
+    getGroupMenuById,
+    createCategories
 };
 

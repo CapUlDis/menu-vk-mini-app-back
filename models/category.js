@@ -14,7 +14,8 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Group',
         key: 'id',
         as: 'groupId'
-      }
+      },
+      allowNull: false
     }
   }, {});
   Category.associate = function (models) {

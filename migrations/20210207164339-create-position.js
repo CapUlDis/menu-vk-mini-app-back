@@ -40,7 +40,8 @@ module.exports = {
           model: 'Category',
           key: 'id',
           as: 'categoryId'
-        }
+        },
+        allowNull: false
       },
       createdAt: {
         allowNull: false,

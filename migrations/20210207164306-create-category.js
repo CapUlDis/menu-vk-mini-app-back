@@ -8,7 +8,8 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       title: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
       index: {
         type: Sequelize.INTEGER,
@@ -19,7 +20,8 @@ module.exports = {
         reference: {
           model: 'Group',
           key: 'groupId',
-        }
+        },
+        allowNull: false
       },
       createdAt: {
         allowNull: false,
