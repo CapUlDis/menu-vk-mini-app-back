@@ -1,0 +1,19 @@
+{
+  "development": {
+    "database": "menu_dev",
+    "dialect": "postgres"
+  },
+  "test": {
+    "database": "menu_test",
+    "dialect": "postgres"
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "rejectUnauthorized": false
+      }
+    }
+  }
+}
