@@ -11,10 +11,6 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
-      index: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-      },
       groupId: {
         type: Sequelize.INTEGER,
         reference: {
@@ -23,6 +19,7 @@ module.exports = {
         },
         allowNull: false
       },
+      posOrder: Sequelize.ARRAY(Sequelize.INTEGER),
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

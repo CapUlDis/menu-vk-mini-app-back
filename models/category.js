@@ -4,10 +4,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    index: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
     groupId: {
       type: DataTypes.INTEGER,
       reference: {
@@ -16,7 +12,8 @@ module.exports = (sequelize, DataTypes) => {
         as: 'groupId'
       },
       allowNull: false
-    }
+    },
+    posOrder: DataTypes.ARRAY(DataTypes.INTEGER)
   }, {});
   Category.associate = function (models) {
     Category.belongsTo(models.Group, {

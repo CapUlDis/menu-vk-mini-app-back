@@ -30,10 +30,6 @@ module.exports = {
       image: {
           type: Sequelize.BLOB,
       },
-      index: {
-          type: Sequelize.INTEGER,
-          allowNull: false
-      },
       categoryId: {
         type: Sequelize.INTEGER,
         reference: {

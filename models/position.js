@@ -23,10 +23,6 @@ module.exports = (sequelize, DataTypes) => {
     image: {
         type: DataTypes.BLOB,
     },
-    index: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
     categoryId: {
       type: DataTypes.INTEGER,
       reference: {

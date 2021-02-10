@@ -12,9 +12,8 @@ module.exports = {
         unique: true,
         allowNull: false
       },
-      linkVkFood: {
-        type: Sequelize.STRING
-      },
+      linkVkFood: Sequelize.STRING,
+      catOrder: Sequelize.ARRAY(Sequelize.INTEGER),
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

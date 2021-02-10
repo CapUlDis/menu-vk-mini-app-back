@@ -5,7 +5,8 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
       allowNull: false
     },
-    linkVkFood: DataTypes.STRING
+    linkVkFood: DataTypes.STRING,
+    catOrder: DataTypes.ARRAY(DataTypes.INTEGER)
   }, {});
   Group.associate = function (models) {
     Group.hasMany(models.Category, {
