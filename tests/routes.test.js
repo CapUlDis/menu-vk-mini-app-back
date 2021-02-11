@@ -25,7 +25,7 @@ describe('User API', () => {
             .send({
                 vkGroupId: 900,
                 catOrder: [1, 2, 3],
-                categories: [
+                Categories: [
                     { title: 'Завтрак', groupId: 1 },
                     { title: 'Супы', groupId: 1 },
                     { title: 'Пицца', groupId: 1 },
@@ -33,6 +33,6 @@ describe('User API', () => {
                 ]
             });
         expect(res.statusCode).toEqual(201);
-        expect(res.body).toHaveProperty('categories');
+        expect(res.body).toHaveProperty('Categories');
     })
 });
