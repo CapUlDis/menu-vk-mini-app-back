@@ -7,7 +7,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      groupId: {
+      vkGroupId: {
         type: Sequelize.INTEGER,
         unique: true,
         allowNull: false

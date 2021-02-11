@@ -6,7 +6,6 @@ module.exports = {
       value: 200,
       unit: 'грамм',
       price: '140 ₽',
-      index: 0,
       categoryId: 2,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -17,7 +16,6 @@ module.exports = {
       value: 200,
       unit: 'грамм',
       price: '280 ₽',
-      index: 1,
       categoryId: 2,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -28,7 +26,6 @@ module.exports = {
       value: 330,
       unit: 'грамм',
       price: '330 ₽',
-      index: 2,
       categoryId: 2,
       createdAt: new Date(),
       updatedAt: new Date()

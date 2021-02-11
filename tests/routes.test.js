@@ -12,7 +12,7 @@ describe('User API', () => {
         const res = await request(app)
             .post('/api/groups')
             .send({
-                groupId: "4",
+                vkGroupId: "4",
                 linkVkFood: "link"
             });
         expect(res.statusCode).toEqual(201);
@@ -23,11 +23,13 @@ describe('User API', () => {
         const res = await request(app)
             .post('/api/categories')
             .send({
+                vkGroupId: 900,
+                catOrder: [1, 2, 3],
                 categories: [
-                    { title: 'Завтрак', index: 0, groupId: 800 },
-                    { title: 'Супы', index: 1, groupId: 800 },
-                    { title: 'Пицца', index: 2, groupId: 800 },
-                    { title: 'Паста', index: 3, groupId: 800 }
+                    { title: 'Завтрак', groupId: 1 },
+                    { title: 'Супы', groupId: 1 },
+                    { title: 'Пицца', groupId: 1 },
+                    { title: 'Паста', groupId: 1 }
                 ]
             });
         expect(res.statusCode).toEqual(201);

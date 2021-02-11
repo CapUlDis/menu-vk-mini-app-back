@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Group = sequelize.define('Group', {
-    groupId: {
+    vkGroupId: {
       type: DataTypes.INTEGER,
       unique: true,
       allowNull: false
