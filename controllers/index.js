@@ -1,6 +1,47 @@
+require('dotenv').config();
 const { Group, Category } = require('../models');
 const db = require('../models');
 const orderArray = require('./utils/orderArray');
+const { v4: uuidv4 } = require('uuid');
+const aws = require("aws-sdk");
+
+const s3 = new aws.S3({
+    signatureVersion: 'v4',
+    region: 'eu-north-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+});
+
+
+const uploadToS3 = async (key, buffer, mimetype) => {
+    return new Promise((resolve, reject) => {
+        s3.putObject(
+            {
+                Bucket: process.env.S3_BUCKET,
+                ContentType: mimetype,
+                Key: key,
+                Body: buffer
+            },
+            () => resolve()
+        );
+    });
+}
+
+const getSignedUrl = async (key, expires = 3600) => {
+    return new Promise((resolve, reject) => {
+        s3.getSignedUrl("getObject", {
+            Bucket: process.env.S3_BUCKET,
+            Key: key,
+            Expires: expires
+        },
+            function (err, url) {
+                if (err) throw new Error(err);
+    
+                resolve(url);
+            }
+        );
+    });
+}
 
 const createGroup = (req, res) => {
     db.sequelize.transaction(async t => {
@@ -54,9 +95,33 @@ const createCategories = (req, res) => {
     });
 };
 
+const createPosition = async (req, res) => {
+    try {
+        const id = uuidv4();
+        console.log(req.file.buffer, req.file.mimetype);
+        await uploadToS3(`images/${id}`, req.file.buffer, req.file.mimetype);
+        return res.status(201).send('OK');
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send(error.message);
+    }
+}
+
+const getPosition = async (req, res) => {
+    try {
+        const image = await getSignedUrl(req.body.imageId);
+        return res.status(200).send(image);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send(error.message);
+    }
+}
+
 module.exports = {
     createGroup, 
     getGroupMenuById,
-    createCategories
+    createCategories,
+    createPosition,
+    getPosition
 };
 
