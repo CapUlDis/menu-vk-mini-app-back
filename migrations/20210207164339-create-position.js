@@ -16,19 +16,19 @@ module.exports = {
           allowNull: false
       },
       value: {
+          type: Sequelize.FLOAT,
+          allowNull: false
+      },
+      unitId: {
           type: Sequelize.INTEGER,
           allowNull: false
       },
-      unit: {
-          type: Sequelize.STRING,
-          allowNull: false
-      },
       price: {
-          type: Sequelize.STRING,
+          type: Sequelize.FLOAT,
           allowNull: false
       },
-      image: {
-          type: Sequelize.BLOB,
+      imageId: {
+          type: Sequelize.STRING,
       },
       categoryId: {
         type: Sequelize.INTEGER,

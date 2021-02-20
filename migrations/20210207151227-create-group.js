@@ -13,7 +13,10 @@ module.exports = {
         allowNull: false
       },
       linkVkFood: Sequelize.STRING,
-      catOrder: Sequelize.ARRAY(Sequelize.INTEGER),
+      catOrder: {
+        type: Sequelize.ARRAY(Sequelize.INTEGER),
+        defaultValue: []
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

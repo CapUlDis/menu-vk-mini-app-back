@@ -13,7 +13,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       allowNull: false
     },
-    posOrder: DataTypes.ARRAY(DataTypes.INTEGER)
+    posOrder: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      defaultValue: []
+    }
   }, {});
   Category.associate = function (models) {
     Category.belongsTo(models.Group, {

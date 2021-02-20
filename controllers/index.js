@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Group, Category } = require('../models');
+const { Group, Category, Position } = require('../models');
 const db = require('../models');
 const orderArray = require('./utils/orderArray');
 const { v4: uuidv4 } = require('uuid');
@@ -96,15 +96,19 @@ const createCategories = (req, res) => {
 };
 
 const createPosition = async (req, res) => {
-    try {
+    db.sequelize.transaction(async t => {
         const id = uuidv4();
-        console.log(req.file.buffer, req.file.mimetype);
+        req.body.imageId = id;
+        let position = await Position.create(req.body);
+
         await uploadToS3(`images/${id}`, req.file.buffer, req.file.mimetype);
-        return res.status(201).send('OK');
-    } catch (error) {
+        position.dataValues.imageUrl = await getSignedUrl(id);
+
+        return res.status(201).json({ position });
+    }).catch((error) => {
         console.log(error);
         return res.status(500).send(error.message);
-    }
+    });
 }
 
 const getPosition = async (req, res) => {

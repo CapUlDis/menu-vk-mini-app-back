@@ -20,7 +20,10 @@ module.exports = {
         },
         allowNull: false
       },
-      posOrder: Sequelize.ARRAY(Sequelize.INTEGER),
+      posOrder: {
+        type: Sequelize.ARRAY(Sequelize.INTEGER),
+        defaultValue: []
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

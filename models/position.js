@@ -9,19 +9,21 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false
     },
     value: {
+        type: DataTypes.FLOAT,
+        allowNull: false
+    },
+    unitId: {
         type: DataTypes.INTEGER,
         allowNull: false
     },
-    unit: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     price: {
-        type: DataTypes.STRING,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
-    image: {
-        type: DataTypes.BLOB,
+    imageId: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false
     },
     categoryId: {
       type: DataTypes.INTEGER,
