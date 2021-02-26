@@ -73,6 +73,14 @@ const getGroupMenuById = (req, res) => {
           }
           return category;
         })
+
+        for (let i = 0; i < group.Categories.length; i++) {
+          if (group.Categories[i].Positions) {
+            for (let j = 0; j < group.Categories[i].Positions.length; j++) {
+              group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
+            }
+          }
+        }
       }
       return res.status(200).json({ group });
     }
