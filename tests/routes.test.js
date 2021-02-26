@@ -35,4 +35,13 @@ describe('User API', () => {
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('Categories');
   })
+
+  it('should change posOrder in category', async () => {
+    const res = await request(app)
+      .patch('/api/categories/1')
+      .send({
+        posOrder: [1, 2, 3]
+      });
+    expect(res.statusCode).toEqual(202);
+  })
 });
