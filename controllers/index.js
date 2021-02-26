@@ -5,6 +5,7 @@ const db = require('../models');
 const orderArray = require('./utils/orderArray');
 const { v4: uuidv4 } = require('uuid');
 const aws = require("aws-sdk");
+const { cast } = require('sequelize');
 
 const s3 = new aws.S3({
   signatureVersion: 'v4',
@@ -127,11 +128,26 @@ const getPosition = async (req, res) => {
   }
 }
 
+const changePositionOrder = async (req, res) => {
+  db.sequelize.transaction(async t => {
+    const { id } = req.params;
+    const posOrderStr = '{' + req.body.posOrder.join() + '}';
+
+    await db.sequelize.query(`UPDATE "Categories" SET "posOrder" = '${posOrderStr}' WHERE id = ${id}`);
+    
+    return res.status(202).send('Positions order in category changed.');
+  }).catch((error) => {
+    console.log(error);
+    return res.status(500).send(error.message);
+  });
+}
+
 module.exports = {
   createGroup,
   getGroupMenuById,
   createCategories,
   createPosition,
-  getPosition
+  getPosition,
+  changePositionOrder
 };
 

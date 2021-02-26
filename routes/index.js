@@ -12,6 +12,7 @@ router.post('/groups', controllers.createGroup);
 router.get('/groups/:vkGroupId', controllers.getGroupMenuById);
 
 router.post('/categories', controllers.createCategories);
+router.patch('/categories/:id', controllers.changePositionOrder);
 
 router.post('/positions', upload.single('image'), controllers.createPosition);
 router.get('/positions', controllers.getPosition);
