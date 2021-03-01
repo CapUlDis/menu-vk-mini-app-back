@@ -16,5 +16,6 @@ router.patch('/categories/:id', controllers.changePositionOrder);
 
 router.post('/positions', upload.single('image'), controllers.createPosition);
 router.get('/positions', controllers.getPosition);
+router.delete('/positions/:id', controllers.deletePosition);
 
 module.exports = router;

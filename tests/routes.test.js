@@ -44,4 +44,11 @@ describe('User API', () => {
       });
     expect(res.statusCode).toEqual(202);
   })
+
+  it('should delete position and its id from category', async () => {
+    const res = await request(app)
+      .delete('/api/positions/2');
+
+    expect(res.statusCode).toEqual(202);
+  })
 });

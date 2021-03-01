@@ -150,12 +150,33 @@ const changePositionOrder = async (req, res) => {
   });
 }
 
+const deletePosition = (req, res) => {
+  db.sequelize.transaction(async t => {
+    const { id } = req.params;
+
+    const position = await Position.findByPk(id);
+    
+    await Category.update(
+      { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), id) },
+      { where: { id: position.categoryId }}
+    );
+
+    await position.destroy();
+
+    return res.status(202).send('Position deleted successfully.');
+  }).catch((error) => {
+    console.log(error);
+    return res.status(500).send(error.message);
+  });
+}
+
 module.exports = {
   createGroup,
   getGroupMenuById,
   createCategories,
   createPosition,
   getPosition,
-  changePositionOrder
+  changePositionOrder,
+  deletePosition
 };
 
