@@ -51,4 +51,18 @@ describe('User API', () => {
 
     expect(res.statusCode).toEqual(202);
   })
+
+  it('should change position', async () => {
+    const res = await request(app)
+      .patch('/api/positions/3')
+      .send({
+        title: 'Смузи',
+        description: 'Смузи из киви и шпината с добавлением клубники, черники и украшенный орехами.',
+        value: 335,
+        unitId: 2,
+        price: 332,
+        categoryId: 3
+      });
+    expect(res.statusCode).toEqual(202);
+  })
 });
