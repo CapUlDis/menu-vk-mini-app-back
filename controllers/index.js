@@ -176,7 +176,8 @@ const deletePosition = (req, res) => {
       { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), id) },
       { where: { id: position.categoryId }}
     );
-
+    
+    await deleteFromS3(`images/${position.imageId}`);
     await position.destroy();
 
     return res.status(202).send('Position deleted successfully.');
