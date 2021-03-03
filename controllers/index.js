@@ -45,6 +45,22 @@ const getSignedUrl = async (key, expires = 3600) => {
   });
 }
 
+const deleteFromS3 = async (key) => {
+  return new Promise((resolve, reject) => {
+    s3.deleteObject(
+      {
+        Bucket: process.env.S3_BUCKET,
+        Key: key,
+      },
+      function (err, url) {
+        if (err) throw new Error(err);
+
+        resolve(url);
+      }
+    );
+  });
+}
+
 const createGroup = (req, res) => {
   db.sequelize.transaction(async t => {
     const group = await Group.create(req.body);
@@ -113,7 +129,7 @@ const createPosition = async (req, res) => {
 
     await Category.update(
       { 'posOrder': sequelize.fn('array_append', sequelize.col('posOrder'), position.id) },
-      { 'where': { 'id': position.categoryId } }
+      { 'where': { 'id': position.categoryId }}
     );
 
     await uploadToS3(`images/${id}`, req.file.buffer, req.file.mimetype);
@@ -170,6 +186,43 @@ const deletePosition = (req, res) => {
   });
 }
 
+const changePosition = (req, res) => {
+  db.sequelize.transaction(async t => {
+    const { id } = req.params;
+    const newValues = req.body
+
+    let position = await Position.findByPk(id).then(instance => {
+        return instance;
+    });
+
+    if (position.dataValues.categoryId !== parseInt(newValues.categoryId)) {
+      // Удаляем айдишник из старой категории
+      await Category.update(
+        { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), position.id) },
+        { where: { id: position.categoryId }}
+      );
+      // Добавляем айдишник в новую категорию
+      await Category.update(
+        { posOrder: sequelize.fn('array_append', sequelize.col('posOrder'), position.id) },
+        { where: { id: newValues.categoryId }}
+      );
+    }
+
+    await position.update(newValues);
+    
+    if (req.file) {
+      await uploadToS3(`images/${position.imageId}`, req.file.buffer, req.file.mimetype);
+    }
+
+    position.dataValues.imageUrl = await getSignedUrl(`images/${position.imageId}`);
+
+    return res.status(202).json({ position });
+  }).catch((error) => {
+    console.log(error);
+    return res.status(500).send(error.message);
+  });
+}
+
 module.exports = {
   createGroup,
   getGroupMenuById,
@@ -177,6 +230,7 @@ module.exports = {
   createPosition,
   getPosition,
   changePositionOrder,
-  deletePosition
+  deletePosition,
+  changePosition
 };
 
