@@ -142,16 +142,6 @@ const createPosition = async (req, res) => {
   });
 }
 
-const getPosition = async (req, res) => {
-  try {
-    const image = await getSignedUrl(req.body.imageId);
-    return res.status(200).send(image);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send(error.message);
-  }
-}
-
 const changePositionOrder = async (req, res) => {
   db.sequelize.transaction(async t => {
     const { id } = req.params;
@@ -229,7 +219,6 @@ module.exports = {
   getGroupMenuById,
   createCategories,
   createPosition,
-  getPosition,
   changePositionOrder,
   deletePosition,
   changePosition
