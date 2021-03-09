@@ -121,6 +121,82 @@ const createCategories = (req, res) => {
   });
 };
 
+const changeCategories = (req, res) => {
+  db.sequelize.transaction(async t => {
+    console.log(req.body);
+    const catOrder = req.body.catOrder;
+
+    if (req.body.newCats.length > 0) {
+      const newCats = await Category.bulkCreate(req.body.newCats, { fields: ['title', 'groupId']});
+      req.body.newCats.forEach((cat, index)  => {
+        const newIndex = catOrder.findIndex(id => id === cat.id);
+        catOrder[newIndex] = newCats[index].id;
+      });
+    }
+
+    if (req.body.catOrder) {
+      const catOrderStr = '{' + catOrder.join() + '}';
+      await db.sequelize.query(`UPDATE "Groups" SET "catOrder" = '${catOrderStr}' WHERE id = ${req.body.groupId}`);
+    }
+
+    if (req.body.deletedCats.length > 0) {
+      const catsToDelete = await Category.findAll({ 
+        where: { id: req.body.deletedCats },
+        include: { all: true }
+      });
+
+      catsToDelete.forEach(category => {
+        category.Positions.forEach(async position => {
+          await deleteFromS3(`images/${position.imageId}`);
+          await position.destroy();
+        });
+      });
+
+      await Category.destroy({ where: { id: req.body.deletedCats }});
+    }
+
+    if (req.body.changedCats.length > 0) {
+      const promises = req.body.changedCats.map(category => {
+        return Category.update({ title: category.title }, {
+          where: { id: category.id }
+        });
+      });
+      await Promise.all(promises);
+    }
+
+    const group = await Group.findOne({
+      where: { id: req.body.groupId },
+      include: {
+        all: true,
+        nested: true
+      }
+    });
+
+    if (group.Categories && group.catOrder) {
+      group.Categories = orderArray(group.Categories, group.catOrder, 'id');
+      group.Categories = group.Categories.map(category => {
+        if (category.Positions && category.posOrder) {
+          category.Positions = orderArray(category.Positions, category.posOrder, 'id');
+        }
+        return category;
+      })
+
+      for (let i = 0; i < group.Categories.length; i++) {
+        if (group.Categories[i].Positions) {
+          for (let j = 0; j < group.Categories[i].Positions.length; j++) {
+            group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
+          }
+        }
+      }
+    }
+
+    return res.status(202).json({ group });
+  }).catch((error) => {
+    console.log(error);
+    return res.status(500).send(error.message);
+  });
+};
+
 const createPosition = async (req, res) => {
   db.sequelize.transaction(async t => {
     const id = uuidv4();
@@ -218,6 +294,7 @@ module.exports = {
   createGroup,
   getGroupMenuById,
   createCategories,
+  changeCategories,
   createPosition,
   changePositionOrder,
   deletePosition,

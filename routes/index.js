@@ -13,6 +13,7 @@ router.get('/groups/:vkGroupId', controllers.getGroupMenuById);
 
 router.post('/categories', controllers.createCategories);
 router.patch('/categories/:id', controllers.changePositionOrder);
+router.put('/categories', controllers.changeCategories);
 
 router.post('/positions', upload.single('image'), controllers.createPosition);
 router.delete('/positions/:id', controllers.deletePosition);
