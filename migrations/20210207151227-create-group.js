@@ -12,7 +12,6 @@ module.exports = {
         unique: true,
         allowNull: false
       },
-      linkVkFood: Sequelize.STRING,
       catOrder: {
         type: Sequelize.ARRAY(Sequelize.INTEGER),
         defaultValue: []

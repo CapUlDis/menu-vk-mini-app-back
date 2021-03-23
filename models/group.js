@@ -5,7 +5,6 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
       allowNull: false
     },
-    linkVkFood: DataTypes.STRING,
     catOrder: {
       type: DataTypes.ARRAY(DataTypes.INTEGER),
       defaultValue: []
