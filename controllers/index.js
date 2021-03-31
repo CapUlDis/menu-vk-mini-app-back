@@ -62,14 +62,30 @@ const deleteFromS3 = async (key) => {
   });
 }
 
-const createGroup = (startParams, req) => {
-  console.log(startParams);
-  // db.sequelize.transaction(async t => {
-  //   const group = await Group.create(req.body);
-  //   return res.status(201).json({ group });
-  // }).catch((error) => {
-  //   return res.status(500).json({ error: error.message });
-  // });
+const createGroupAndFirstCategories = async (startParams, req) => {
+  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
+    return AppResponse.forbidden({ message: 'Forbidden user' });
+  }
+
+  const data = await db.sequelize.transaction(async t => {
+    const group = await Group.create({ vkGroupId: startParams.vk_group_id });
+
+    const newCats = req.body.map(cat => {
+      cat.groupId = group.id;
+      return cat;
+    });
+
+    const Categories = await Category.bulkCreate(newCats);
+    const catOrder = Categories.map(elem => { return elem.id });
+
+    await group.update({ catOrder });
+
+    group.dataValues.Categories = Categories;
+
+    return group;
+  });
+
+  return AppResponse.created({ group: data });
 };
 
 const getGroupMenuById = async (startParams) => {
@@ -100,22 +116,7 @@ const getGroupMenuById = async (startParams) => {
     }
     return AppResponse.ok({ group });
   }
-  return AppResponse.notFound({ message: 'Group with specified Id not found'});
-};
-
-const createCategories = (req, res) => {
-  db.sequelize.transaction(async t => {
-    console.log(req.body);
-    const Categories = await Category.bulkCreate(req.body.Categories);
-    const catOrder = Categories.map(elem => { return elem.id });
-    await Group.update({ catOrder }, {
-      where: { vkGroupId: req.body.vkGroupId }
-    });
-    return res.status(201).json({ catOrder, Categories });
-  }).catch((error) => {
-    console.log(error);
-    return res.status(500).send(error.message);
-  });
+  return AppResponse.notFound({ message: 'Group with specified Id not found' });
 };
 
 const changeCategories = (req, res) => {
@@ -196,6 +197,8 @@ const changeCategories = (req, res) => {
 
 const createPosition = async (req, res) => {
   db.sequelize.transaction(async t => {
+    //! проверить, что категория, в которой создают позицию, принадлежить группе
+
     const id = uuidv4();
     req.body.imageId = id;
     let position = await Position.create(req.body);
@@ -217,6 +220,7 @@ const createPosition = async (req, res) => {
 
 const changePositionOrder = async (req, res) => {
   db.sequelize.transaction(async t => {
+    //! проверить, что изменяемая категория принадлежит группе
     const { id } = req.params;
     const posOrderStr = '{' + req.body.posOrder.join() + '}';
 
@@ -231,6 +235,7 @@ const changePositionOrder = async (req, res) => {
 
 const deletePosition = (req, res) => {
   db.sequelize.transaction(async t => {
+    //! проверить, что позиция приндлежить категории, которая, приндлежить группе
     const { id } = req.params;
 
     const position = await Position.findByPk(id);
@@ -252,6 +257,7 @@ const deletePosition = (req, res) => {
 
 const changePosition = (req, res) => {
   db.sequelize.transaction(async t => {
+    //! проверить, что изменяемая позиция принадлежит категории, которая принадлежит группе
     const { id } = req.params;
     const newValues = req.body
 
@@ -288,9 +294,8 @@ const changePosition = (req, res) => {
 }
 
 module.exports = {
-  createGroup,
+  createGroupAndFirstCategories,
   getGroupMenuById,
-  createCategories,
   changeCategories,
   createPosition,
   changePositionOrder,

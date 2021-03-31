@@ -17,4 +17,8 @@ AppResponse.notFound = function(data) {
   return new AppResponse(404, data);
 }
 
+AppResponse.forbidden = function(data) {
+  return new AppResponse(403, data);
+}
+
 module.exports = { AppResponse }
