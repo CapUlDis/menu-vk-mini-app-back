@@ -1,11 +1,12 @@
 require('dotenv').config();
 const sequelize = require('sequelize');
-const { Group, Category, Position } = require('../models');
 const db = require('../models');
 const orderArray = require('./utils/orderArray');
-const { v4: uuidv4 } = require('uuid');
 const aws = require("aws-sdk");
-const { cast } = require('sequelize');
+const { Group, Category, Position } = require('../models');
+const { AppResponse } = require('../routes/utils/AppResponse');
+const { v4: uuidv4 } = require('uuid');
+
 
 const s3 = new aws.S3({
   signatureVersion: 'v4',
@@ -61,7 +62,7 @@ const deleteFromS3 = async (key) => {
   });
 }
 
-const createGroup = (startParams, res) => {
+const createGroup = (startParams, req) => {
   console.log(startParams);
   // db.sequelize.transaction(async t => {
   //   const group = await Group.create(req.body);
@@ -71,40 +72,35 @@ const createGroup = (startParams, res) => {
   // });
 };
 
-const getGroupMenuById = (req, res) => {
-  db.sequelize.transaction(async t => {
-    const { vkGroupId } = req.params;
-    const group = await Group.findOne({
-      where: { vkGroupId: vkGroupId },
-      include: {
-        all: true,
-        nested: true
-      }
-    });
-    if (group) {
-      if (group.Categories && group.catOrder) {
-        group.Categories = orderArray(group.Categories, group.catOrder, 'id');
-        group.Categories = group.Categories.map(category => {
-          if (category.Positions && category.posOrder) {
-            category.Positions = orderArray(category.Positions, category.posOrder, 'id');
-          }
-          return category;
-        })
+const getGroupMenuById = async (startParams) => {
+  const group = await Group.findOne({
+    where: { vkGroupId: startParams.vk_group_id },
+    include: {
+      all: true,
+      nested: true
+    }
+  });
+  if (group) {
+    if (group.Categories && group.catOrder) {
+      group.Categories = orderArray(group.Categories, group.catOrder, 'id');
+      group.Categories = group.Categories.map(category => {
+        if (category.Positions && category.posOrder) {
+          category.Positions = orderArray(category.Positions, category.posOrder, 'id');
+        }
+        return category;
+      })
 
-        for (let i = 0; i < group.Categories.length; i++) {
-          if (group.Categories[i].Positions) {
-            for (let j = 0; j < group.Categories[i].Positions.length; j++) {
-              group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
-            }
+      for (let i = 0; i < group.Categories.length; i++) {
+        if (group.Categories[i].Positions) {
+          for (let j = 0; j < group.Categories[i].Positions.length; j++) {
+            group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
           }
         }
       }
-      return res.status(200).json({ group });
     }
-    return res.status(204).send();
-  }).catch((error) => {
-    return res.status(500).send(error.message);
-  });
+    return AppResponse.ok({ group });
+  }
+  return AppResponse.notFound({ message: 'Group with specified Id not found'});
 };
 
 const createCategories = (req, res) => {
