@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 
 
-function verifyLaunchParams(searchOrParsedUrlQuery, secretKey) {
+function getStartParamsFromUrl(searchOrParsedUrlQuery, secretKey) {
   console.log('--verify--');
 
   let sign;
@@ -73,7 +73,16 @@ function verifyLaunchParams(searchOrParsedUrlQuery, secretKey) {
     .replace(/\//g, '_')
     .replace(/=$/, '');
 
-  return paramsHash === sign;
+  if (paramsHash !== sign) {
+    return false;
+  } else {
+    let queryObj = {};
+
+    queryParams.forEach(item => queryObj[item.key] = item.value);
+
+    return queryObj;
+  }
+
 }
 
-module.exports = verifyLaunchParams;
+module.exports = getStartParamsFromUrl;
