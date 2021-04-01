@@ -76,7 +76,7 @@ const createGroupAndFirstCategories = async (startParams, req) => {
     });
 
     const Categories = await Category.bulkCreate(newCats);
-    const catOrder = Categories.map(elem => { return elem.id });
+    const catOrder = Categories.map(elem => elem.id );
 
     await group.update({ catOrder });
 
@@ -124,8 +124,8 @@ const changeCategories = async (startParams, req) => {
     return AppResponse.forbidden({ message: 'Forbidden user' });
   }
 
-  const data = await db.sequelize.transaction(async t => {
-    let group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
+  await db.sequelize.transaction(async t => {
+    const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
     const catOrder = req.body.catOrder;
 
     if (req.body.newCats.length > 0) {
@@ -157,7 +157,7 @@ const changeCategories = async (startParams, req) => {
 
       catsToDelete.forEach(category => {
         category.Positions.forEach(async position => {
-          await deleteFromS3(`images/${position.imageId}`);
+          deleteFromS3(`images/${position.imageId}`);
           await position.destroy();
         });
       });
@@ -177,37 +177,37 @@ const changeCategories = async (startParams, req) => {
       });
       await Promise.all(promises);
     }
+    
+    return;
+  });
 
-    group = await Group.findOne({
-      where: { vkGroupId: startParams.vk_group_id },
-      include: {
-        all: true,
-        nested: true
+  const group = await Group.findOne({
+    where: { vkGroupId: startParams.vk_group_id },
+    include: {
+      all: true,
+      nested: true
+    }
+  });
+
+  if (group.Categories && group.catOrder) {
+    group.Categories = orderArray(group.Categories, group.catOrder, 'id');
+    group.Categories = group.Categories.map(category => {
+      if (category.Positions && category.posOrder) {
+        category.Positions = orderArray(category.Positions, category.posOrder, 'id');
       }
-    });
+      return category;
+    })
 
-    if (group.Categories && group.catOrder) {
-      group.Categories = orderArray(group.Categories, group.catOrder, 'id');
-      group.Categories = group.Categories.map(category => {
-        if (category.Positions && category.posOrder) {
-          category.Positions = orderArray(category.Positions, category.posOrder, 'id');
-        }
-        return category;
-      })
-
-      for (let i = 0; i < group.Categories.length; i++) {
-        if (group.Categories[i].Positions) {
-          for (let j = 0; j < group.Categories[i].Positions.length; j++) {
-            group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
-          }
+    for (let i = 0; i < group.Categories.length; i++) {
+      if (group.Categories[i].Positions) {
+        for (let j = 0; j < group.Categories[i].Positions.length; j++) {
+          group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
         }
       }
     }
+  }
 
-    return group;
-  });
-
-  return AppResponse.ok({ group: data });
+  return AppResponse.ok({ group });
 };
 
 const createPosition = async (startParams, req) => {
