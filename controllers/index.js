@@ -210,30 +210,41 @@ const changeCategories = async (startParams, req) => {
   return AppResponse.ok({ group: data });
 };
 
-const createPosition = async (req, res) => {
-  db.sequelize.transaction(async t => {
-    //! проверить, что категория, в которой создают позицию, принадлежить группе
+const createPosition = async (startParams, req) => {
+  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
+    return AppResponse.forbidden({ message: 'Forbidden user' });
+  }
 
-    const id = uuidv4();
-    req.body.imageId = id;
-    let position = await Position.create(req.body);
+  const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
+  if (!await group.hasCategories(req.body.categoryId)) {
+    throw new Error('Invalid categoryId');
+  }
+
+  const id = uuidv4();
+  req.body.imageId = id;
+  await uploadToS3(`images/${id}`, req.file.buffer, req.file.mimetype);
+  
+  const position = await db.sequelize.transaction(async t => {
+    const pos = await Position.create(req.body);
 
     await Category.update(
-      { 'posOrder': sequelize.fn('array_append', sequelize.col('posOrder'), position.id) },
-      { 'where': { 'id': position.categoryId }}
+      { 'posOrder': sequelize.fn('array_append', sequelize.col('posOrder'), pos.id) },
+      { 'where': { 'id': pos.categoryId }}
     );
 
-    await uploadToS3(`images/${id}`, req.file.buffer, req.file.mimetype);
-    position.dataValues.imageUrl = await getSignedUrl(`images/${id}`);
-
-    return res.status(201).json({ position });
-  }).catch((error) => {
-    console.log(error);
-    return res.status(500).send(error.message);
+    return pos;
   });
+
+  position.dataValues.imageUrl = await getSignedUrl(`images/${id}`);
+
+  return AppResponse.created({ position });
 }
 
-const changePositionOrder = async (req, res) => {
+const changePositionOrder = async (startParams, req) => {
+  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
+    return AppResponse.forbidden({ message: 'Forbidden user' });
+  }
+
   db.sequelize.transaction(async t => {
     //! проверить, что изменяемая категория принадлежит группе
     const { id } = req.params;
@@ -241,11 +252,13 @@ const changePositionOrder = async (req, res) => {
 
     await db.sequelize.query(`UPDATE "Categories" SET "posOrder" = '${posOrderStr}' WHERE id = ${id}`);
     
-    return res.status(202).send('Positions order in category changed.');
+    return res.status(202).send('Positions order in category changed');
   }).catch((error) => {
     console.log(error);
     return res.status(500).send(error.message);
   });
+
+  return AppResponse.ok({ message: 'Positions order in category changed' });
 }
 
 const deletePosition = (req, res) => {
