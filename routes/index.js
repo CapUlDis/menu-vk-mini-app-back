@@ -68,7 +68,7 @@ function wrap(callback) {
 router.post('/groups', wrap(controllers.createGroupAndFirstCategories));
 router.get('/groups', wrap(controllers.getGroupMenuById));
 
-router.patch('/categories/:id', controllers.changePositionOrder);
+router.patch('/categories/:id', wrap(controllers.changePositionOrder));
 router.put('/categories', wrap(controllers.changeCategories));
 
 router.post('/positions', upload.single('image'), wrap(controllers.createPosition));

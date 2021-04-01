@@ -245,17 +245,19 @@ const changePositionOrder = async (startParams, req) => {
     return AppResponse.forbidden({ message: 'Forbidden user' });
   }
 
-  db.sequelize.transaction(async t => {
-    //! проверить, что изменяемая категория принадлежит группе
+  await db.sequelize.transaction(async t => {
     const { id } = req.params;
+    const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
+    const category = await Category.findByPk(id)
+    if (!await group.hasCategories(category) || !await category.hasPositions(req.body.posOrder)) {
+      throw new Error('Invalid categoryId or ids in posOrder');
+    }
+    
     const posOrderStr = '{' + req.body.posOrder.join() + '}';
 
     await db.sequelize.query(`UPDATE "Categories" SET "posOrder" = '${posOrderStr}' WHERE id = ${id}`);
     
-    return res.status(202).send('Positions order in category changed');
-  }).catch((error) => {
-    console.log(error);
-    return res.status(500).send(error.message);
+    return;
   });
 
   return AppResponse.ok({ message: 'Positions order in category changed' });
