@@ -73,6 +73,6 @@ router.put('/categories', wrap(controllers.changeCategories));
 
 router.post('/positions', upload.single('image'), wrap(controllers.createPosition));
 router.delete('/positions/:id', wrap(controllers.deletePosition));
-router.patch('/positions/:id', upload.single('image'), controllers.changePosition);
+router.patch('/positions/:id', upload.single('image'), wrap(controllers.changePosition));
 
 module.exports = router;

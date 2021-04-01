@@ -290,17 +290,25 @@ const deletePosition = async (startParams, req) => {
   return AppResponse.ok({ message: 'Position was deleted successfully' });
 }
 
-const changePosition = (req, res) => {
-  db.sequelize.transaction(async t => {
-    //! проверить, что изменяемая позиция принадлежит категории, которая принадлежит группе
-    const { id } = req.params;
-    const newValues = req.body
+const changePosition = async (startParams, req) => {
+  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
+    return AppResponse.forbidden({ message: 'Forbidden user' });
+  }
 
-    let position = await Position.findByPk(id).then(instance => {
-        return instance;
-    });
+  const pos = await db.sequelize.transaction(async t => {
+    const { id } = req.params;
+    let position = await Position.findByPk(id);
+    const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
+    const newValues = req.body;
+
+    if (!await group.hasCategories(position.categoryId)) {
+      throw new Error('Invalid categoryId');
+    }
 
     if (position.dataValues.categoryId !== parseInt(newValues.categoryId)) {
+      if (!await group.hasCategories(newValues.categoryId)) {
+        throw new Error('Invalid new categoryId');
+      }
       // Удаляем айдишник из старой категории
       await Category.update(
         { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), position.id) },
@@ -315,17 +323,18 @@ const changePosition = (req, res) => {
 
     await position.update(newValues);
     
+    return position;
+  }).then(async position => {
     if (req.file) {
       await uploadToS3(`images/${position.imageId}`, req.file.buffer, req.file.mimetype);
     }
 
     position.dataValues.imageUrl = await getSignedUrl(`images/${position.imageId}`);
 
-    return res.status(202).json({ position });
-  }).catch((error) => {
-    console.log(error);
-    return res.status(500).send(error.message);
+    return position;
   });
+
+  return AppResponse.ok({ position: pos });
 }
 
 module.exports = {
