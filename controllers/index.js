@@ -119,9 +119,13 @@ const getGroupMenuById = async (startParams) => {
   return AppResponse.notFound({ message: 'Group with specified Id not found' });
 };
 
-const changeCategories = (req, res) => {
-  db.sequelize.transaction(async t => {
-    console.log(req.body);
+const changeCategories = async (startParams, req) => {
+  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
+    return AppResponse.forbidden({ message: 'Forbidden user' });
+  }
+
+  const data = await db.sequelize.transaction(async t => {
+    let group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
     const catOrder = req.body.catOrder;
 
     if (req.body.newCats.length > 0) {
@@ -133,11 +137,19 @@ const changeCategories = (req, res) => {
     }
 
     if (req.body.catOrder) {
+      if (!await group.hasCategories(catOrder)) {
+        throw new Error('Invalid ids in catOrder');
+      }
+
       const catOrderStr = '{' + catOrder.join() + '}';
-      await db.sequelize.query(`UPDATE "Groups" SET "catOrder" = '${catOrderStr}' WHERE id = ${req.body.groupId}`);
+      await db.sequelize.query(`UPDATE "Groups" SET "catOrder" = '${catOrderStr}' WHERE "vkGroupId" = ${startParams.vk_group_id}`);
     }
 
     if (req.body.deletedCats.length > 0) {
+      if (!await group.hasCategories(req.body.deletedCats)) {
+        throw new Error('Invalid ids in deletedCats');
+      }
+
       const catsToDelete = await Category.findAll({ 
         where: { id: req.body.deletedCats },
         include: { all: true }
@@ -154,6 +166,10 @@ const changeCategories = (req, res) => {
     }
 
     if (req.body.changedCats.length > 0) {
+      if (!await group.hasCategories(req.body.changedCats.map(cat => cat.id))) {
+        throw new Error('Invalid ids in changedCats');
+      }
+
       const promises = req.body.changedCats.map(category => {
         return Category.update({ title: category.title }, {
           where: { id: category.id }
@@ -162,8 +178,8 @@ const changeCategories = (req, res) => {
       await Promise.all(promises);
     }
 
-    const group = await Group.findOne({
-      where: { id: req.body.groupId },
+    group = await Group.findOne({
+      where: { vkGroupId: startParams.vk_group_id },
       include: {
         all: true,
         nested: true
@@ -188,11 +204,10 @@ const changeCategories = (req, res) => {
       }
     }
 
-    return res.status(202).json({ group });
-  }).catch((error) => {
-    console.log(error);
-    return res.status(500).send(error.message);
+    return group;
   });
+
+  return AppResponse.ok({ group: data });
 };
 
 const createPosition = async (req, res) => {

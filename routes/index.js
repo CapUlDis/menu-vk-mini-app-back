@@ -69,7 +69,7 @@ router.post('/groups', wrap(controllers.createGroupAndFirstCategories));
 router.get('/groups', wrap(controllers.getGroupMenuById));
 
 router.patch('/categories/:id', controllers.changePositionOrder);
-router.put('/categories', controllers.changeCategories);
+router.put('/categories', wrap(controllers.changeCategories));
 
 router.post('/positions', upload.single('image'), controllers.createPosition);
 router.delete('/positions/:id', controllers.deletePosition);
