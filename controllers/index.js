@@ -263,26 +263,31 @@ const changePositionOrder = async (startParams, req) => {
   return AppResponse.ok({ message: 'Positions order in category changed' });
 }
 
-const deletePosition = (req, res) => {
-  db.sequelize.transaction(async t => {
-    //! проверить, что позиция приндлежить категории, которая, приндлежить группе
-    const { id } = req.params;
+const deletePosition = async (startParams, req) => {
+  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
+    return AppResponse.forbidden({ message: 'Forbidden user' });
+  }
 
+  await db.sequelize.transaction(async t => {
+    const { id } = req.params;
     const position = await Position.findByPk(id);
+    const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
+    
+    if (!await group.hasCategories(position.categoryId)) {
+      throw new Error('Invalid categoryId');
+    }
     
     await Category.update(
       { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), id) },
       { where: { id: position.categoryId }}
     );
     
-    await deleteFromS3(`images/${position.imageId}`);
     await position.destroy();
 
-    return res.status(202).send('Position deleted successfully.');
-  }).catch((error) => {
-    console.log(error);
-    return res.status(500).send(error.message);
-  });
+    return position.imageId;
+  }).then(imageId => deleteFromS3(`images/${imageId}`));
+
+  return AppResponse.ok({ message: 'Position was deleted successfully' });
 }
 
 const changePosition = (req, res) => {
