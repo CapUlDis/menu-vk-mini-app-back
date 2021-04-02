@@ -153,7 +153,7 @@ const changeCategories = async (startParams, req) => {
         throw new Error('Invalid ids in catOrder');
       }
 
-      const catOrderStr = '{' + catOrder.join() + '}';
+      const catOrderStr = '{' + catOrder.join(',') + '}';
       await db.sequelize.query(`UPDATE "Groups" SET "catOrder" = '${catOrderStr}' WHERE "vkGroupId" = ${startParams.vk_group_id}`);
     }
 
@@ -239,7 +239,7 @@ const changePositionOrder = async (startParams, req) => {
       throw new Error('Invalid categoryId or ids in posOrder');
     }
     
-    const posOrderStr = '{' + req.body.posOrder.join() + '}';
+    const posOrderStr = '{' + req.body.posOrder.join(',') + '}';
 
     await db.sequelize.query(`UPDATE "Categories" SET "posOrder" = '${posOrderStr}' WHERE id = ${id}`);
     
