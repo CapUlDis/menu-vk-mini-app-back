@@ -2,8 +2,6 @@ const crypto = require('crypto');
 
 
 function getStartParamsFromUrl(searchOrParsedUrlQuery, secretKey) {
-  console.log('--verify--');
-
   let sign;
   const queryParams = [];
 
