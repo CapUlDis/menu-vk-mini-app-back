@@ -19,32 +19,41 @@ const s3 = new aws.S3({
 const uploadToS3 = async (key, buffer, mimetype) => {
   return new Promise((resolve, reject) => {
     s3.putObject(
-      {
+        {
         Bucket: process.env.S3_BUCKET,
         ContentType: mimetype,
         Key: key,
         Body: buffer
       },
-      () => resolve()
-    );
-  });
-}
-
-const getSignedUrl = async (key, expires = 3600) => {
-  return new Promise((resolve, reject) => {
-    s3.getSignedUrl("getObject", {
-      Bucket: process.env.S3_BUCKET,
-      Key: key,
-      Expires: expires
-    },
-      function (err, url) {
-        if (err) throw new Error(err);
-
-        resolve(url);
+      err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       }
     );
   });
-}
+};
+
+const getSignedUrl = async (key, expires = 3600) => {
+  return new Promise((resolve, reject) => {
+    s3.getSignedUrl("getObject", 
+      {
+        Bucket: process.env.S3_BUCKET,
+        Key: key,
+        Expires: expires
+      },
+      (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      }
+    );
+  });
+};
 
 const deleteFromS3 = async (key) => {
   return new Promise((resolve, reject) => {
@@ -53,14 +62,17 @@ const deleteFromS3 = async (key) => {
         Bucket: process.env.S3_BUCKET,
         Key: key,
       },
-      function (err, url) {
-        if (err) throw new Error(err);
-
-        resolve(url);
+      err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       }
     );
   });
-}
+};
+
 
 const createGroupAndFirstCategories = async (startParams, req) => {
   if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
