@@ -3,6 +3,7 @@ const sequelize = require('sequelize');
 const db = require('../models');
 const orderArray = require('./utils/orderArray');
 const aws = require("aws-sdk");
+const { QueryTypes } = require('sequelize');
 const { Group, Category, Position } = require('../models');
 const { AppResponse } = require('../routes/utils/AppResponse');
 const { v4: uuidv4 } = require('uuid');
@@ -157,7 +158,13 @@ const changeCategories = async (startParams, req) => {
       }
 
       const catOrderStr = '{' + catOrder.join(',') + '}';
-      await db.sequelize.query(`UPDATE "Groups" SET "catOrder" = '${catOrderStr}' WHERE "vkGroupId" = ${startParams.vk_group_id}`);
+      await db.sequelize.query(
+        'UPDATE "Groups" SET "catOrder" = $1 WHERE "vkGroupId" = $2',
+        {
+          bind: [catOrderStr, startParams.vk_group_id],
+          type: QueryTypes.UPDATE
+        }
+      );
     }
 
     if (req.body.deletedCats.length > 0) {
@@ -244,7 +251,13 @@ const changePositionOrder = async (startParams, req) => {
     
     const posOrderStr = '{' + req.body.posOrder.join(',') + '}';
 
-    await db.sequelize.query(`UPDATE "Categories" SET "posOrder" = '${posOrderStr}' WHERE id = ${id}`);
+    await db.sequelize.query(
+      'UPDATE "Categories" SET "posOrder" = $1 WHERE id = $2', 
+      {
+        bind: [posOrderStr, id],
+        type: QueryTypes.UPDATE
+      }
+    );
     
     return;
   });
