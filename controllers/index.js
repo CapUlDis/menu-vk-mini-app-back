@@ -269,20 +269,32 @@ const changePosition = async (startParams, req) => {
     return AppResponse.forbidden({ message: 'Forbidden user' });
   }
 
-  const pos = await db.sequelize.transaction(async t => {
-    const { id } = req.params;
-    let position = await Position.findByPk(id);
-    const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
-    const newValues = req.body;
+  const { id } = req.params;
+  let position = await Position.findByPk(id);
+  const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
+  const newValues = req.body;
 
-    if (!await group.hasCategories(position.categoryId)) {
-      throw new Error('Invalid categoryId');
+  if (!await group.hasCategories(position.categoryId)) {
+    throw new Error('Invalid categoryId');
+  }
+
+  if (position.categoryId !== parseInt(newValues.categoryId)) {
+    if (!await group.hasCategories(newValues.categoryId)) {
+      throw new Error('Invalid new categoryId');
     }
+  }
 
+  if (req.file) {
+    await deleteFromS3(`images/${position.imageId}`);
+
+    const imageId = uuidv4();
+    newValues.imageId = imageId;
+    await uploadToS3(`images/${imageId}`, req.file.buffer, req.file.mimetype);
+  }
+
+
+  await db.sequelize.transaction(async t => {
     if (position.dataValues.categoryId !== parseInt(newValues.categoryId)) {
-      if (!await group.hasCategories(newValues.categoryId)) {
-        throw new Error('Invalid new categoryId');
-      }
       // Удаляем айдишник из старой категории
       await Category.update(
         { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), position.id) },
@@ -297,18 +309,12 @@ const changePosition = async (startParams, req) => {
 
     await position.update(newValues);
     
-    return position;
-  }).then(async position => {
-    if (req.file) {
-      await uploadToS3(`images/${position.imageId}`, req.file.buffer, req.file.mimetype);
-    }
-
-    position.dataValues.imageUrl = await getSignedUrl(`images/${position.imageId}`);
-
-    return position;
+    return;
   });
 
-  return AppResponse.ok({ position: pos });
+  position.dataValues.imageUrl = await getSignedUrl(`images/${position.imageId}`);
+
+  return AppResponse.ok({ position });
 }
 
 module.exports = {
