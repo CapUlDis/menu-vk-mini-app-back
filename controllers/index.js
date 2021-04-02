@@ -181,33 +181,7 @@ const changeCategories = async (startParams, req) => {
     return;
   });
 
-  const group = await Group.findOne({
-    where: { vkGroupId: startParams.vk_group_id },
-    include: {
-      all: true,
-      nested: true
-    }
-  });
-
-  if (group.Categories && group.catOrder) {
-    group.Categories = orderArray(group.Categories, group.catOrder, 'id');
-    group.Categories = group.Categories.map(category => {
-      if (category.Positions && category.posOrder) {
-        category.Positions = orderArray(category.Positions, category.posOrder, 'id');
-      }
-      return category;
-    })
-
-    for (let i = 0; i < group.Categories.length; i++) {
-      if (group.Categories[i].Positions) {
-        for (let j = 0; j < group.Categories[i].Positions.length; j++) {
-          group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
-        }
-      }
-    }
-  }
-
-  return AppResponse.ok({ group });
+  return getGroupMenuById(startParams);
 };
 
 const createPosition = async (startParams, req) => {
