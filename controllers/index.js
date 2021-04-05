@@ -3,6 +3,7 @@ const sequelize = require('sequelize');
 const db = require('../models');
 const orderArray = require('./utils/orderArray');
 const aws = require("aws-sdk");
+const path = require("path");
 const { QueryTypes } = require('sequelize');
 const { Group, Category, Position } = require('../models');
 const { AppResponse } = require('../routes/utils/AppResponse');
@@ -74,11 +75,19 @@ const deleteFromS3 = async (key) => {
   });
 };
 
+const getImageKey = ({ fileName, vkGroupId }) => {
+  const date = new Date();
+  const extName = path.extname(fileName);
+
+  return`img/${vkGroupId}/${date.toISOString().slice(0,7)}/${date.getTime() + extName}`;
+}
+
 const isAdmin = startParams => {
   return startParams.vk_viewer_group_role && startParams.vk_viewer_group_role === 'admin';
 };
 
 const FORBIDDEN_RESPONSE = AppResponse.forbidden({ message: 'Forbidden user' });
+
 
 const createGroupAndFirstCategories = async (startParams, req) => {
   if (!isAdmin(startParams)) {
@@ -127,7 +136,7 @@ const getGroupMenuById = async (startParams) => {
       for (let i = 0; i < group.Categories.length; i++) {
         if (group.Categories[i].Positions) {
           for (let j = 0; j < group.Categories[i].Positions.length; j++) {
-            group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(`images/${group.Categories[i].Positions[j].imageId}`);
+            group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(group.Categories[i].Positions[j].imageId);
           }
         }
       }
@@ -182,13 +191,13 @@ const changeCategories = async (startParams, req) => {
         include: { all: true }
       });
 
-      catsToDelete.forEach(category => {
-        category.Positions.forEach(async position => {
-          deleteFromS3(`images/${position.imageId}`);
-          await position.destroy();
-        });
-      });
-
+      for (let i = 0; i < catsToDelete.length; i++) {
+        for (let j = 0; j < catsToDelete[i].Positions.length; j++) {
+          await deleteFromS3(catsToDelete[i].Positions[j].imageId);
+          await catsToDelete[i].Positions[j].destroy();
+        }
+      }
+      
       await Category.destroy({ where: { id: req.body.deletedCats }});
     }
 
@@ -221,9 +230,9 @@ const createPosition = async (startParams, req) => {
     throw new Error('Invalid categoryId');
   }
 
-  const id = uuidv4();
-  req.body.imageId = id;
-  await uploadToS3(`images/${id}`, req.file.buffer, req.file.mimetype);
+  const key = getImageKey({ fileName: req.file.originalname, vkGroupId: startParams.vk_group_id });
+  req.body.imageId = key;
+  await uploadToS3(key, req.file.buffer, req.file.mimetype);
   
   const position = await db.sequelize.transaction(async t => {
     const pos = await Position.create(req.body);
@@ -236,7 +245,7 @@ const createPosition = async (startParams, req) => {
     return pos;
   });
 
-  position.dataValues.imageUrl = await getSignedUrl(`images/${id}`);
+  position.dataValues.imageUrl = await getSignedUrl(key);
 
   return AppResponse.created({ position });
 }
@@ -292,7 +301,7 @@ const deletePosition = async (startParams, req) => {
     await position.destroy();
 
     return position.imageId;
-  }).then(imageId => deleteFromS3(`images/${imageId}`));
+  }).then(imageId => deleteFromS3(imageId));
 
   return AppResponse.ok({ message: 'Position was deleted successfully' });
 }
@@ -318,11 +327,11 @@ const changePosition = async (startParams, req) => {
   }
 
   if (req.file) {
-    await deleteFromS3(`images/${position.imageId}`);
+    await deleteFromS3(position.imageId);
 
-    const imageId = uuidv4();
-    newValues.imageId = imageId;
-    await uploadToS3(`images/${imageId}`, req.file.buffer, req.file.mimetype);
+    const newKey = getImageKey({ fileName: req.file.originalname, vkGroupId: startParams.vk_group_id });
+    newValues.imageId = newKey;
+    await uploadToS3(newKey, req.file.buffer, req.file.mimetype);
   }
 
 
@@ -345,7 +354,7 @@ const changePosition = async (startParams, req) => {
     return;
   });
 
-  position.dataValues.imageUrl = await getSignedUrl(`images/${position.imageId}`);
+  position.dataValues.imageUrl = await getSignedUrl(position.imageId);
 
   return AppResponse.ok({ position });
 }
