@@ -74,10 +74,15 @@ const deleteFromS3 = async (key) => {
   });
 };
 
+const isAdmin = startParams => {
+  return startParams.vk_viewer_group_role && startParams.vk_viewer_group_role === 'admin';
+};
+
+const FORBIDDEN_RESPONSE = AppResponse.forbidden({ message: 'Forbidden user' });
 
 const createGroupAndFirstCategories = async (startParams, req) => {
-  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
-    return AppResponse.forbidden({ message: 'Forbidden user' });
+  if (!isAdmin(startParams)) {
+    return FORBIDDEN_RESPONSE;
   }
 
   const data = await db.sequelize.transaction(async t => {
@@ -133,8 +138,8 @@ const getGroupMenuById = async (startParams) => {
 };
 
 const changeCategories = async (startParams, req) => {
-  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
-    return AppResponse.forbidden({ message: 'Forbidden user' });
+  if (!isAdmin(startParams)) {
+    return FORBIDDEN_RESPONSE;
   }
 
   await db.sequelize.transaction(async t => {
@@ -207,8 +212,8 @@ const changeCategories = async (startParams, req) => {
 };
 
 const createPosition = async (startParams, req) => {
-  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
-    return AppResponse.forbidden({ message: 'Forbidden user' });
+  if (!isAdmin(startParams)) {
+    return FORBIDDEN_RESPONSE;
   }
 
   const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
@@ -237,8 +242,8 @@ const createPosition = async (startParams, req) => {
 }
 
 const changePositionOrder = async (startParams, req) => {
-  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
-    return AppResponse.forbidden({ message: 'Forbidden user' });
+  if (!isAdmin(startParams)) {
+    return FORBIDDEN_RESPONSE;
   }
 
   await db.sequelize.transaction(async t => {
@@ -266,8 +271,8 @@ const changePositionOrder = async (startParams, req) => {
 }
 
 const deletePosition = async (startParams, req) => {
-  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
-    return AppResponse.forbidden({ message: 'Forbidden user' });
+  if (!isAdmin(startParams)) {
+    return FORBIDDEN_RESPONSE;
   }
 
   await db.sequelize.transaction(async t => {
@@ -293,8 +298,8 @@ const deletePosition = async (startParams, req) => {
 }
 
 const changePosition = async (startParams, req) => {
-  if (!startParams.vk_viewer_group_role || startParams.vk_viewer_group_role !== 'admin') {
-    return AppResponse.forbidden({ message: 'Forbidden user' });
+  if (!isAdmin(startParams)) {
+    return FORBIDDEN_RESPONSE;
   }
 
   const { id } = req.params;
