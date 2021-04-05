@@ -25,32 +25,14 @@ const uploadToS3 = async (key, buffer, mimetype) => {
         Bucket: process.env.S3_BUCKET,
         ContentType: mimetype,
         Key: key,
-        Body: buffer
+        Body: buffer,
+        ACL: 'public-read'
       },
       err => {
         if (err) {
           reject(err);
         } else {
           resolve();
-        }
-      }
-    );
-  });
-};
-
-const getSignedUrl = async (key, expires = 3600) => {
-  return new Promise((resolve, reject) => {
-    s3.getSignedUrl("getObject", 
-      {
-        Bucket: process.env.S3_BUCKET,
-        Key: key,
-        Expires: expires
-      },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(data);
         }
       }
     );
@@ -136,7 +118,7 @@ const getGroupMenuById = async (startParams) => {
       for (let i = 0; i < group.Categories.length; i++) {
         if (group.Categories[i].Positions) {
           for (let j = 0; j < group.Categories[i].Positions.length; j++) {
-            group.Categories[i].Positions[j].dataValues.imageUrl = await getSignedUrl(group.Categories[i].Positions[j].imageId);
+            group.Categories[i].Positions[j].dataValues.imageUrl = process.env.S3_BUCKET_URL + group.Categories[i].Positions[j].dataValues.imageId;
           }
         }
       }
@@ -245,7 +227,7 @@ const createPosition = async (startParams, req) => {
     return pos;
   });
 
-  position.dataValues.imageUrl = await getSignedUrl(key);
+  position.dataValues.imageUrl = process.env.S3_BUCKET_URL + key;
 
   return AppResponse.created({ position });
 }
@@ -354,7 +336,7 @@ const changePosition = async (startParams, req) => {
     return;
   });
 
-  position.dataValues.imageUrl = await getSignedUrl(position.imageId);
+  position.dataValues.imageUrl = process.env.S3_BUCKET_URL + position.imageId;
 
   return AppResponse.ok({ position });
 }
