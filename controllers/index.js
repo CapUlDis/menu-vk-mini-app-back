@@ -7,7 +7,6 @@ const path = require("path");
 const { QueryTypes } = require('sequelize');
 const { Group, Category, Position } = require('../models');
 const { AppResponse } = require('../routes/utils/AppResponse');
-const { v4: uuidv4 } = require('uuid');
 
 
 const s3 = new aws.S3({

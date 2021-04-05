@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bearerToken = require('express-bearer-token');
 const logger = require('morgan');
+const gracefulShutdown = require('http-graceful-shutdown');
 const { exec } = require('child_process');
 
 const routes = require('./routes');
@@ -20,7 +21,8 @@ app.use('/api', routes);
 
 switch(args[0]) {
   case 'http':
-    app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
+    const server = app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
+    gracefulShutdown(server);
     break;
   case 'migrate':
     new Promise((resolve, reject) => {
