@@ -4,6 +4,7 @@ const db = require('../models');
 const orderArray = require('./utils/orderArray');
 const aws = require("aws-sdk");
 const path = require("path");
+const axios = require('axios');
 const { QueryTypes } = require('sequelize');
 const { Group, Category, Position } = require('../models');
 const { AppResponse } = require('../routes/utils/AppResponse');
@@ -69,6 +70,31 @@ const isAdmin = startParams => {
 
 const FORBIDDEN_RESPONSE = AppResponse.forbidden({ message: 'Forbidden user' });
 
+
+const getGroupInfo = async (startParams) => {
+  const groupInfo = await axios.get(
+    'https://api.vk.com/method/groups.getById?'+ 
+    `group_id=${startParams.vk_group_id}&` + 
+    `fields=addresses,cover,has_photo&` + 
+    `access_token=${process.env.VK_APP_SERVICE_KEY}&` + 
+    `v=5.130`
+  ).then(result => result.data.response[0]);
+
+  if (groupInfo.addresses.is_enabled) {
+    const mainAddress = await axios.get(
+      'https://api.vk.com/method/groups.getAddresses?' + 
+      `group_id=${startParams.vk_group_id}&` + 
+      `address_ids=${groupInfo.addresses.main_address_id}&` +
+      `fields=timetable&` + 
+      `access_token=${process.env.VK_APP_SERVICE_KEY}` + 
+      `&v=5.130`
+    ).then(result => result.data.response.items[0]);
+
+    groupInfo.main_address = mainAddress;
+  }
+  
+  return AppResponse.ok({ groupInfo });
+};
 
 const createGroupAndFirstCategories = async (startParams, req) => {
   if (!isAdmin(startParams)) {
@@ -341,6 +367,7 @@ const changePosition = async (startParams, req) => {
 }
 
 module.exports = {
+  getGroupInfo,
   createGroupAndFirstCategories,
   getGroupMenuById,
   changeCategories,
