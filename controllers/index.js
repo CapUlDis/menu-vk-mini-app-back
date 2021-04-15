@@ -143,7 +143,9 @@ const getGroupMenuById = async (startParams) => {
       for (let i = 0; i < group.Categories.length; i++) {
         if (group.Categories[i].Positions) {
           for (let j = 0; j < group.Categories[i].Positions.length; j++) {
-            group.Categories[i].Positions[j].dataValues.imageUrl = process.env.S3_BUCKET_URL + group.Categories[i].Positions[j].dataValues.imageId;
+            if (group.Categories[i].Positions[j].dataValues.imageId) {
+              group.Categories[i].Positions[j].dataValues.imageUrl = process.env.S3_BUCKET_URL + group.Categories[i].Positions[j].dataValues.imageId;
+            }
           }
         }
       }
@@ -200,7 +202,10 @@ const changeCategories = async (startParams, req) => {
 
       for (let i = 0; i < catsToDelete.length; i++) {
         for (let j = 0; j < catsToDelete[i].Positions.length; j++) {
-          await deleteFromS3(catsToDelete[i].Positions[j].imageId);
+          if (catsToDelete[i].Positions[j].imageId) {
+            await deleteFromS3(catsToDelete[i].Positions[j].imageId);
+          }
+
           await catsToDelete[i].Positions[j].destroy();
         }
       }
@@ -236,10 +241,11 @@ const createPosition = async (startParams, req) => {
   if (!await group.hasCategories(req.body.categoryId)) {
     throw new Error('Invalid categoryId');
   }
-
-  const key = getImageKey({ fileName: req.file.originalname, vkGroupId: startParams.vk_group_id });
-  req.body.imageId = key;
-  await uploadToS3(key, req.file.buffer, req.file.mimetype);
+  
+  if (req.file) {
+    req.body.imageId = getImageKey({ fileName: req.file.originalname, vkGroupId: startParams.vk_group_id });
+    await uploadToS3(req.body.imageId, req.file.buffer, req.file.mimetype);
+  }
   
   const position = await db.sequelize.transaction(async t => {
     const pos = await Position.create(req.body);
@@ -252,7 +258,9 @@ const createPosition = async (startParams, req) => {
     return pos;
   });
 
-  position.dataValues.imageUrl = process.env.S3_BUCKET_URL + key;
+  if (position.imageId) {
+    position.dataValues.imageUrl = process.env.S3_BUCKET_URL + position.imageId;
+  }
 
   return AppResponse.created({ position });
 }
@@ -308,7 +316,11 @@ const deletePosition = async (startParams, req) => {
     await position.destroy();
 
     return position.imageId;
-  }).then(imageId => deleteFromS3(imageId));
+  }).then(imageId => {
+    if (imageId) {
+      deleteFromS3(imageId);
+    }
+  });
 
   return AppResponse.ok({ message: 'Position was deleted successfully' });
 }
@@ -334,13 +346,22 @@ const changePosition = async (startParams, req) => {
   }
 
   if (req.file) {
-    await deleteFromS3(position.imageId);
-
+    if (position.imageId) {
+      await deleteFromS3(position.imageId);
+    }
+    
     const newKey = getImageKey({ fileName: req.file.originalname, vkGroupId: startParams.vk_group_id });
     newValues.imageId = newKey;
     await uploadToS3(newKey, req.file.buffer, req.file.mimetype);
   }
 
+  if (req.body.imageId === 'null') {
+    if (position.imageId) {
+      await deleteFromS3(position.imageId);
+    }
+
+    newValues.imageId = null;
+  }
 
   await db.sequelize.transaction(async t => {
     if (position.dataValues.categoryId !== parseInt(newValues.categoryId)) {
@@ -361,7 +382,9 @@ const changePosition = async (startParams, req) => {
     return;
   });
 
-  position.dataValues.imageUrl = process.env.S3_BUCKET_URL + position.imageId;
+  if (position.imageId) {
+    position.dataValues.imageUrl = process.env.S3_BUCKET_URL + position.imageId;
+  }
 
   return AppResponse.ok({ position });
 }

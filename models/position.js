@@ -23,7 +23,6 @@ module.exports = (sequelize, DataTypes) => {
     imageId: {
         type: DataTypes.STRING,
         unique: true,
-        allowNull: false
     },
     categoryId: {
       type: DataTypes.INTEGER,
