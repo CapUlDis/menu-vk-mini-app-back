@@ -1,20 +1,15 @@
 require('dotenv').config();
 const sequelize = require('sequelize');
 const db = require('../models');
-const orderArray = require('./utils/orderArray');
 const axios = require('axios');
 const { QueryTypes } = require('sequelize');
 const { Group, Category, Position } = require('../models');
 const { AppResponse } = require('../routes/utils/AppResponse');
 const { uploadToS3, deleteFromS3, getImageKey } = require('./utils/S3');
+const { orderArray, isAdmin, getImageUrl } = require('./utils/utils');
 
-
-const isAdmin = startParams => {
-  return startParams.vk_viewer_group_role && startParams.vk_viewer_group_role === 'admin';
-};
 
 const FORBIDDEN_RESPONSE = AppResponse.forbidden({ message: 'Forbidden user' });
-
 
 const getGroupInfo = async (startParams) => {
   const groupInfo = await axios.get(
@@ -89,7 +84,7 @@ const getGroupMenuById = async (startParams) => {
         if (group.Categories[i].Positions) {
           for (let j = 0; j < group.Categories[i].Positions.length; j++) {
             if (group.Categories[i].Positions[j].dataValues.imageId) {
-              group.Categories[i].Positions[j].dataValues.imageUrl = process.env.S3_BUCKET_URL + group.Categories[i].Positions[j].dataValues.imageId;
+              group.Categories[i].Positions[j].dataValues.imageUrl = getImageUrl(group.Categories[i].Positions[j].dataValues.imageId);
             }
           }
         }
@@ -204,7 +199,7 @@ const createPosition = async (startParams, req) => {
   });
 
   if (position.imageId) {
-    position.dataValues.imageUrl = process.env.S3_BUCKET_URL + position.imageId;
+    position.dataValues.imageUrl = getImageUrl(position.imageId);
   }
 
   return AppResponse.created({ position });
@@ -328,7 +323,7 @@ const changePosition = async (startParams, req) => {
   });
 
   if (position.imageId) {
-    position.dataValues.imageUrl = process.env.S3_BUCKET_URL + position.imageId;
+    position.dataValues.imageUrl = getImageUrl(position.imageId);
   }
 
   return AppResponse.ok({ position });
