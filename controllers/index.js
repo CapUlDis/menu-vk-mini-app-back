@@ -2,67 +2,12 @@ require('dotenv').config();
 const sequelize = require('sequelize');
 const db = require('../models');
 const orderArray = require('./utils/orderArray');
-const aws = require("aws-sdk");
-const path = require("path");
 const axios = require('axios');
 const { QueryTypes } = require('sequelize');
 const { Group, Category, Position } = require('../models');
 const { AppResponse } = require('../routes/utils/AppResponse');
+const { uploadToS3, deleteFromS3, getImageKey } = require('./utils/S3');
 
-
-const s3 = new aws.S3({
-  signatureVersion: 'v4',
-  region: 'eu-north-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-});
-
-
-const uploadToS3 = async (key, buffer, mimetype) => {
-  return new Promise((resolve, reject) => {
-    s3.putObject(
-        {
-        Bucket: process.env.S3_BUCKET,
-        ContentType: mimetype,
-        Key: key,
-        Body: buffer,
-        ACL: 'public-read'
-      },
-      err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      }
-    );
-  });
-};
-
-const deleteFromS3 = async (key) => {
-  return new Promise((resolve, reject) => {
-    s3.deleteObject(
-      {
-        Bucket: process.env.S3_BUCKET,
-        Key: key,
-      },
-      err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      }
-    );
-  });
-};
-
-const getImageKey = ({ fileName, vkGroupId }) => {
-  const date = new Date();
-  const extName = path.extname(fileName);
-
-  return`img/${vkGroupId}/${date.toISOString().slice(0,7)}/${date.getTime() + extName}`;
-}
 
 const isAdmin = startParams => {
   return startParams.vk_viewer_group_role && startParams.vk_viewer_group_role === 'admin';
