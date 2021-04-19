@@ -9,7 +9,10 @@ module.exports = {
       },
       title: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        validate: {
+          len: [1, 30]
+        }
       },
       groupId: {
         type: Sequelize.INTEGER,

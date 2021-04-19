@@ -108,7 +108,7 @@ const changeCategories = async (startParams, req) => {
       const newCats = await Category.bulkCreate(req.body.newCats.map(cat => {
         cat.groupId = group.id;
         return cat;
-      }), { fields: ['title', 'groupId']});
+      }), { fields: ['title', 'groupId'], validate: true });
       req.body.newCats.forEach((cat, index)  => {
         const newIndex = catOrder.findIndex(id => id === cat.id);
         catOrder[newIndex] = newCats[index].id;
