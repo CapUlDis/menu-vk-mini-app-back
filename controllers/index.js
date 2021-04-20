@@ -319,7 +319,9 @@ const changePosition = async (startParams, req) => {
       );
     }
 
-    await position.update(newValues);
+    position.set(newValues);
+    await position.validate({ skip: ['limitPosPerCat'] });
+    await position.save({ validate: false });
     
     return;
   });
