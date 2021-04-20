@@ -6,7 +6,7 @@
   "scripts": {
     "pretest": "cross-env NODE_ENV=test npm run db:reset",
     "db:create:test": "cross-env NODE_ENV=test npx sequelize-cli db:create",
-    "start": "nodemon server.js",
+    "start": "nodemon server.js http",
     "db:reset": "npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all"
   },
   "keywords": [],
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.843.0",
+    "axios": "^0.21.1",
     "body-parser": "^1.19.0",
     "cls-hooked": "^4.2.2",
     "cors": "^2.8.5",

@@ -64,6 +64,7 @@ function wrap(callback) {
   };
 }
 
+router.get('/group_info', wrap(controllers.getGroupInfo));
 
 router.post('/groups', wrap(controllers.createGroupAndFirstCategories));
 router.get('/groups', wrap(controllers.getGroupMenuById));
