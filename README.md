@@ -19,3 +19,10 @@ VK_APP_SERVICE_KEY - Ключ приложения для обращения к 
 
 CATS_PER_GROUP - Максимальное количесвто категорий на группу<br/>
 POS_PER_CAT - Максимальное количество позиций на группу
+
+# Info
+
+- Название: Меню Заведения, menu
+- PM: vk.com/girl
+- Dev: https://vk.com/pierrot_le_fou
+- Staging: https://vk.com/app7815236, https://menu.dev1.hsstore.ru/
