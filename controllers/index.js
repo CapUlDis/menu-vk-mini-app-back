@@ -49,7 +49,7 @@ const createGroupAndFirstCategories = async (startParams, req) => {
       return cat;
     });
 
-    const Categories = await Category.bulkCreate(newCats);
+    const Categories = await Category.bulkCreate(newCats, { validate: true });
     const catOrder = Categories.map(elem => elem.id );
 
     await group.update({ catOrder });
@@ -159,8 +159,10 @@ const changeCategories = async (startParams, req) => {
       }
 
       let changingCats = await Category.findAll({ where: { id: req.body.changedCats.map(cat => cat.id) }});
+
       for (let i = 0; i < changingCats.length; i++) {
         changingCats[i].title = req.body.changedCats[i].title;
+        
         await changingCats[i].validate({ skip: ['limitCatsPerGroup'] });
         await changingCats[i].save({ validate: false });
       }
@@ -191,8 +193,8 @@ const createPosition = async (startParams, req) => {
     const pos = await Position.create(req.body);
 
     await Category.update(
-      { 'posOrder': sequelize.fn('array_append', sequelize.col('posOrder'), pos.id) },
-      { 'where': { 'id': pos.categoryId }}
+      { posOrder: sequelize.fn('array_append', sequelize.col('posOrder'), pos.id) },
+      { where: { 'id': pos.categoryId }, validate: false },
     );
 
     return pos;
@@ -250,7 +252,7 @@ const deletePosition = async (startParams, req) => {
     
     await Category.update(
       { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), id) },
-      { where: { id: position.categoryId }}
+      { where: { id: position.categoryId }, validate: false },
     );
     
     await position.destroy();
@@ -308,12 +310,12 @@ const changePosition = async (startParams, req) => {
       // Удаляем айдишник из старой категории
       await Category.update(
         { posOrder: db.sequelize.fn('array_remove', db.sequelize.col('posOrder'), position.id) },
-        { where: { id: position.categoryId }}
+        { where: { id: position.categoryId }, validate: false }
       );
       // Добавляем айдишник в новую категорию
       await Category.update(
         { posOrder: sequelize.fn('array_append', sequelize.col('posOrder'), position.id) },
-        { where: { id: newValues.categoryId }}
+        { where: { id: newValues.categoryId }, validate: false }
       );
     }
 
