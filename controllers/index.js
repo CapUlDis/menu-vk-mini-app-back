@@ -104,6 +104,29 @@ const changeCategories = async (startParams, req) => {
     const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
     const catOrder = req.body.catOrder;
 
+    if (req.body.deletedCats.length > 0) {
+      if (!await group.hasCategories(req.body.deletedCats)) {
+        throw new Error('Invalid ids in deletedCats');
+      }
+
+      const catsToDelete = await Category.findAll({ 
+        where: { id: req.body.deletedCats },
+        include: { all: true }
+      });
+
+      for (let i = 0; i < catsToDelete.length; i++) {
+        for (let j = 0; j < catsToDelete[i].Positions.length; j++) {
+          if (catsToDelete[i].Positions[j].imageId) {
+            await deleteFromS3(catsToDelete[i].Positions[j].imageId);
+          }
+
+          await catsToDelete[i].Positions[j].destroy();
+        }
+      }
+      
+      await Category.destroy({ where: { id: req.body.deletedCats }});
+    }
+
     if (req.body.newCats.length > 0) {
       const newCats = await Category.bulkCreate(req.body.newCats.map(cat => {
         cat.groupId = group.id;
@@ -130,40 +153,17 @@ const changeCategories = async (startParams, req) => {
       );
     }
 
-    if (req.body.deletedCats.length > 0) {
-      if (!await group.hasCategories(req.body.deletedCats)) {
-        throw new Error('Invalid ids in deletedCats');
-      }
-
-      const catsToDelete = await Category.findAll({ 
-        where: { id: req.body.deletedCats },
-        include: { all: true }
-      });
-
-      for (let i = 0; i < catsToDelete.length; i++) {
-        for (let j = 0; j < catsToDelete[i].Positions.length; j++) {
-          if (catsToDelete[i].Positions[j].imageId) {
-            await deleteFromS3(catsToDelete[i].Positions[j].imageId);
-          }
-
-          await catsToDelete[i].Positions[j].destroy();
-        }
-      }
-      
-      await Category.destroy({ where: { id: req.body.deletedCats }});
-    }
-
     if (req.body.changedCats.length > 0) {
       if (!await group.hasCategories(req.body.changedCats.map(cat => cat.id))) {
         throw new Error('Invalid ids in changedCats');
       }
 
-      const promises = req.body.changedCats.map(category => {
-        return Category.update({ title: category.title }, {
-          where: { id: category.id }
-        });
-      });
-      await Promise.all(promises);
+      let changingCats = await Category.findAll({ where: { id: req.body.changedCats.map(cat => cat.id) }});
+      for (let i = 0; i < changingCats.length; i++) {
+        changingCats[i].title = req.body.changedCats[i].title;
+        await changingCats[i].validate({ skip: ['limitCatsPerGroup'] });
+        await changingCats[i].save({ validate: false });
+      }
     }
     
     return;
