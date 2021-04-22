@@ -2,11 +2,15 @@ const aws = require("aws-sdk");
 const path = require("path");
 
 
+const ep = new aws.Endpoint(process.env.AWS_HOST);
 const s3 = new aws.S3({
   signatureVersion: 'v4',
-  region: 'eu-north-1',
+  region: process.env.AWS_REGION || 'eu-north-1',
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  endpoint: process.env.AWS_HOST ? ep : undefined,
+  s3BucketEndpoint: process.env.AWS_S3_BUCKED_ENDPOINT,
+  s3ForcePathStyle: process.env.AWS_S3_FORCE_PATH_STYLE,
 });
 
 const uploadToS3 = async (key, buffer, mimetype) => {
