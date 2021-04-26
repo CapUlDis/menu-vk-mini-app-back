@@ -6,6 +6,7 @@ const gracefulShutdown = require('http-graceful-shutdown');
 const { exec } = require('child_process');
 
 const routes = require('./routes');
+const rateLimiter = require('./middlewares/rateLimiter');
 
 const PORT = process.env.PORT || 3000;
 
@@ -16,6 +17,7 @@ app.use(cors());
 app.use(bearerToken());
 app.use(express.json());
 app.use(logger('dev'));
+app.use(rateLimiter);
 
 app.use('/api', routes);
 
