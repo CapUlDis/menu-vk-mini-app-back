@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       allowNull: false,
       validate: {
+        isFloat: true,
         min: 0
       }
     },
@@ -25,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
+        isInt: true,
         min: 0,
         max: 3
       }
@@ -33,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       allowNull: false,
       validate: {
+        isFloat: true,
         min: 0
       }
     },
@@ -50,7 +53,11 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id',
         as: 'categoryId'
       },
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isInt: true,
+        min: 0
+      }
     }
   }, {
     validate: {

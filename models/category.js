@@ -14,7 +14,11 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id',
         as: 'groupId'
       },
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isInt: true,
+        min: 0
+      }
     },
     posOrder: {
       type: DataTypes.ARRAY(DataTypes.INTEGER),

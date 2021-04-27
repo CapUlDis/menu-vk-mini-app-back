@@ -3,7 +3,12 @@ module.exports = (sequelize, DataTypes) => {
     vkGroupId: {
       type: DataTypes.INTEGER,
       unique: true,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isInt: true,
+        min: 0,
+        max: 10000000000
+      }
     },
     catOrder: {
       type: DataTypes.ARRAY(DataTypes.INTEGER),
