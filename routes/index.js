@@ -1,13 +1,11 @@
-const { Router } = require('express');
-const multer = require("multer");
+
 const controllers = require('../controllers');
-const { AppResponse } = require('./utils/AppResponse');
 const getStartParamsFromUrl = require('./utils/getStartParamsFromUrl');
+const { AppResponse } = require('./utils/AppResponse');
+const { Router } = require('express');
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+
 const router = Router();
-
 
 /**
  * @param req
@@ -26,7 +24,7 @@ function logRequestError(req, user, err) {
  */
 function wrap(callback) {
   // для экспресса надо вернуть функцию которая принимает req res
-  return (req, res) => {
+  return async (req, res) => {
     if (!req.token) {
       res.status(500).send({ message: 'Invalid start parameters' });
       return;
@@ -43,6 +41,7 @@ function wrap(callback) {
       res.status(500).send({ message: 'Invalid start parameters' });
       return;
     }
+
     // вызываем callback и передаем ему на вход параметры запуска
     // и объект запроса
     // он должен вернуть промис
@@ -72,8 +71,8 @@ router.get('/groups', wrap(controllers.getGroupMenuById));
 router.patch('/categories/:id', wrap(controllers.changePositionOrder));
 router.put('/categories', wrap(controllers.changeCategories));
 
-router.post('/positions', upload.single('image'), wrap(controllers.createPosition));
+router.post('/positions', wrap(controllers.createPosition));
 router.delete('/positions/:id', wrap(controllers.deletePosition));
-router.patch('/positions/:id', upload.single('image'), wrap(controllers.changePosition));
+router.patch('/positions/:id', wrap(controllers.changePosition));
 
 module.exports = router;

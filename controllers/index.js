@@ -2,6 +2,7 @@ require('dotenv').config();
 const sequelize = require('sequelize');
 const db = require('../models');
 const axios = require('axios');
+const uploadPromise = require('./utils/imageLoader');
 const { QueryTypes } = require('sequelize');
 const { Group, Category, Position } = require('../models');
 const { AppResponse } = require('../routes/utils/AppResponse');
@@ -179,6 +180,12 @@ const createPosition = async (startParams, req) => {
     return FORBIDDEN_RESPONSE;
   }
 
+  try {
+    await uploadPromise(req, {});
+  } catch (error) {
+    throw error;
+  }
+
   const group =  await Group.findOne({ where: { vkGroupId: startParams.vk_group_id }});
   if (!await group.hasCategories(req.body.categoryId)) {
     throw new Error('Invalid categoryId');
@@ -270,6 +277,12 @@ const deletePosition = async (startParams, req) => {
 const changePosition = async (startParams, req) => {
   if (!isAdmin(startParams)) {
     return FORBIDDEN_RESPONSE;
+  }
+
+  try {
+    await uploadPromise(req, {});
+  } catch (error) {
+    throw error;
   }
 
   const { id } = req.params;
