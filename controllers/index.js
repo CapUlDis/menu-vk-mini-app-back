@@ -21,7 +21,7 @@ const getGroupInfo = async (startParams) => {
     `v=5.130`
   ).then(result => result.data.response[0]);
 
-  if (groupInfo.addresses.is_enabled) {
+  if (groupInfo.addresses && groupInfo.addresses.is_enabled) {
     const mainAddress = await axios.get(
       'https://api.vk.com/method/groups.getAddresses?' + 
       `group_id=${startParams.vk_group_id}&` + 
