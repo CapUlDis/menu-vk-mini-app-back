@@ -42,6 +42,16 @@ function wrap(callback) {
       return;
     }
 
+    const nowTs = Date.now();
+    const dayBefore = new Date(nowTs - 60 * 60 * 24 * 1000);
+    const now = new Date(nowTs);
+    const vkTsDate = new Date(startParams.vk_ts * 1000);
+    
+    if (vkTsDate < dayBefore || vkTsDate > now) {
+      res.status(500).send({ message: 'Start parameters are obsolete or invalid' });
+      return;
+    }
+
     // вызываем callback и передаем ему на вход параметры запуска
     // и объект запроса
     // он должен вернуть промис
