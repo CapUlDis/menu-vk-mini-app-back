@@ -37,11 +37,11 @@ function wrap(callback) {
       return;
     }
 
-    if (!startParams.vk_group_id) {
+    if (!startParams.vk_group_id || !startParams.vk_ts) {
       res.status(500).send({ message: 'Invalid start parameters' });
       return;
     }
-
+    
     const nowTs = Date.now();
     const dayBefore = new Date(nowTs - 60 * 60 * 24 * 1000);
     const now = new Date(nowTs);
